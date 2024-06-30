@@ -1,0 +1,45 @@
+# Blender3D MTL File: puerta_yafaray.blend
+# Material Count: 4
+newmtl cromado
+Ns 398.039216
+Ka 0.000000 0.000000 0.000000
+Kd 0.316688 0.299622 0.129817
+Ks 1.583090 1.581454 1.263120
+Ni 1.000000
+d 1.000000
+illum 2
+
+
+newmtl madera_puerta_tilewood.jpg
+Ns 125.490196
+Ka 0.000000 0.000000 0.000000
+Kd 0.685168 0.643734 0.405819
+Ks 0.268981 0.268981 0.268981
+Ni 1.200000
+d 1.000000
+illum 2
+map_Kd tilewood.jpg
+
+
+newmtl madera_puerta4_tilewood.jpg
+Ns 125.490196
+Ka 0.000000 0.000000 0.000000
+Kd 0.685168 0.643734 0.405819
+Ks 0.268981 0.268981 0.268981
+Ni 1.200000
+d 1.000000
+illum 2
+map_Kd tilewood.jpg
+
+
+newmtl madera_puerta2_tilewood.jpg
+Ns 125.490196
+Ka 0.000000 0.000000 0.000000
+Kd 0.685168 0.643734 0.405819
+Ks 0.268981 0.268981 0.268981
+Ni 1.200000
+d 1.000000
+illum 2
+map_Kd tilewood.jpg
+
+

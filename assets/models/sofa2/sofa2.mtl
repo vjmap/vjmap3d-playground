@@ -1,0 +1,23 @@
+# Blender MTL File: 'Sofa.blend'
+# Material Count: 3
+
+newmtl Fabric
+Ns 1
+Ka 0.62 0.57 0.45
+Kd 0.62 0.57 0.45
+Ks 0 0 0
+illum 2
+
+newmtl Trim
+Ns 1
+Ka 0.60 0.57 0.55
+Kd 0.60 0.57 0.55
+Ks 0 0 0
+illum 2
+
+newmtl Wood
+Ns 2
+Ka 0.42 0.31 0.2
+Kd 0.42 0.31 0.2
+Ks 0.1 0.1 0.1
+illum 2

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>唯杰地图vjmap3d示例</title>
+    <!--这是vjmap提供的样式和js库，实际项目中只需引入下面这两个文件即可-->
+    <link rel="stylesheet" type="text/css" href="../../js/vjmap/vjmap.min.css">
+    <script type="text/javascript" src="../../js/vjmap/vjmap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../js/vjmap/vjmap3d.min.css">
+    <!--下面的第三方的样式和js库，只是为了示例演示的需要引入的库，实际项目中无需引入下面的这些文件-->
+    <link rel="stylesheet" type="text/css" href="../../css/demo.css">
+    <script type="text/javascript" src="../../js/env.js"></script>
+</head>
+<body style=" margin: 0;overflow: hidden;background-color:white;font-size: 16px">
+<div id="map" style="left:0;right:0;top:0;bottom:0;position: absolute;z-index: 0; background:#000117"></div>
+<div id="ui" style="z-index: 2;"></div>
+</body>
+<script type="importmap">
+    {
+        "imports": {
+            "three": "../../js/three/build/three.module.js",
+            "three/examples/jsm/": "../../js/three/examples/jsm/",
+            "three/addons/": "../../js/three/examples/jsm/",
+            "vjmap3d": "../../js/vjmap/vjmap3d.min.js"
+        }
+    }
+</script>
+<!--为了支持类型提示，把html和js分开了-->
+<script type="module">
+    import * as THREE from 'three';
+    import * as vjmap3d from "vjmap3d";
+            import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+        import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
+        import { TransformControls } from 'three/addons/controls/TransformControls.js';window.GUI=GUI;
+window.CCDIKSolver=CCDIKSolver;
+window.CCDIKHelper=CCDIKHelper;
+window.TransformControls=TransformControls;
+    window.THREE = THREE;
+    window.vjmap3d = vjmap3d;
+</script>
+<script type="module" src="./002threeWebglAnimationSkinningIK_animation_skinning.js">
+</script>
+</html>
