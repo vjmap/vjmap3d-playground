@@ -5,6 +5,8 @@
 
   [在线示例查看地址:](https://vjmap.com/map3d/demo/) https://vjmap.com/map3d/demo/
 
+  ![](https://vjmap.com/blogimages/202406301703728.png)
+  
 # 运行
   
   入口文件为`index.html`, 示例文件目录为 `src`，每个示例都是独立的例子，都能单独运行。
