@@ -21,7 +21,7 @@
                 viewHelper: { enable: true, position: "leftBottom" } // 是否显示视角指示器
             }
         })
-        let guideLine = new vjmap3d.TrailLine({
+        let trailLineEnt = new vjmap3d.TrailLineEntity({
             positions:[[1,1,1],[-5,1,5],[-5,1,1]],        //以xz轴为平面
             width:10,                   //线宽
             placeLength:15,             //图标放置的长度
@@ -31,11 +31,7 @@
             smooth: true,
             isAnimate:true  //是否需要动画
         })
-        guideLine.update(app)
-        app.scene.add(guideLine.trail)
-        app.signal.onAppUpdate.add(e => {
-            guideLine.update(app)
-        })
+        trailLineEnt.addTo(app)
     }
     catch (e) {
         console.error(e);

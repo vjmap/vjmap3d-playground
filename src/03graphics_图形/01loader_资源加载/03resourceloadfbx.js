@@ -24,7 +24,7 @@
                 viewHelper: { enable: true, position: "leftBottom" } // 是否显示视角指示器
             }
         })
-        await vjmap3d.ResManager.loadExtensionLoader()
+        
         let ent = await vjmap3d.ResManager.loadModel("https://vjmap.com/map3d/resources/models/stanford-bunny.fbx", {
             splitSubEntity: true,
             size:  5,

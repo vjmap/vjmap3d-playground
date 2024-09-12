@@ -34,6 +34,7 @@
             center: prj.toLngLat([116.3912, 39.9073]),
             zoom: 10,
             pitch: 0,
+            antialias: true, // 反锯齿
             renderWorldCopies: false // 不显示多屏地图
         });
         // 关联服务对象和投影对象
