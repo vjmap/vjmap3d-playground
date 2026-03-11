@@ -1,18 +1,20 @@
 
-    
+[English](#english) | 中文
+
 # 介绍
-  此工程为[唯杰地图](https://vjmap.com/)   [VJMAP3D](https://vjmap.com/map3d)  示例的所有源代码。
 
-  [在线示例查看地址:](https://vjmap.com/map3d/demo/) https://vjmap.com/map3d/demo/
+此工程为[唯杰地图](https://vjmap.com/) [VJMAP3D](https://vjmap.com/map3d) 示例的所有源代码。
 
-  ![](https://vjmap.com/blogimages/202406301703728.png)
-  
+[在线示例查看地址:](https://vjmap.com/map3d/demo/) https://vjmap.com/map3d/demo/
+
+![](https://vjmap.com/blogimages/202406301703728.png)
+
 # 运行
-  
-  入口文件为`index.html`, 示例文件目录为 `src`，每个示例都是独立的例子，都能单独运行。
 
-  由于`File协议`无法实现跨域，如果直接双击`index.html`会导致一些资源无法加载。所以需要以`http服务器`的方式运行。方法为
-  
+入口文件为`index.html`, 示例文件目录为 `src`，每个示例都是独立的例子，都能单独运行。
+
+由于`File协议`无法实现跨域，如果直接双击`index.html`会导致一些资源无法加载。所以需要以`http服务器`的方式运行。方法为
+
 - 方法一(需要有`node`环境)：
 ```
 npm install -g live-server
@@ -23,7 +25,6 @@ npm install -g live-server
 
 在`vscode`里面安装插件`Live Server`，安装成功后，打开此目录，选择一个html页面，右键选择`Open With Live Server`即可。
 
-
 # 唯杰地图介绍
 
 `唯杰地图VJMAP`为`CAD`图或`自定义地图格式`WebGIS`可视化`显示开发提供的一站式解决方案，支持的格式如常用的`AutoCAD`的`DWG`格式文件、`GeoJSON`等常用`GIS`文件格式，它使用WebGL`矢量图块`和`自定义样式`呈现交互式地图, 提供了全新的`大数据可视化`、`实时流数据`可视化功能，通过本产品可快速实现浏览器和移动端上美观、流畅的地图呈现与空间分析，可帮助您在网站中构建功能丰富、交互性强、可定制的地图应用。
@@ -31,7 +32,6 @@ npm install -g live-server
 [唯杰地图](https://vjmap.com/)官网地址：https://vjmap.com/
 
 # 唯杰地图特点
-
 
 - 完全兼容`AutoCAD`格式的`DWG`文件，无需转换
 
@@ -53,8 +53,8 @@ npm install -g live-server
 
 - 服务部署`跨平台`支持(支持`windows`,`linux`); 支持`docker`部署，地图查看完全兼容`移动端`。
 
-
 # 唯杰地图3D
+
 [唯杰地图3D](https://vjmap.com/map3d) `VJMAP3D`是一款基于[threejs](https://threejs.org/)开发的三维可视化引擎框架。通过VJMAP3D提供的丰富的功能，可以在浏览器中创建出绚丽的3D可视化应用。
 
 该框架既可做为一个单独的3D引擎用于数据可视化、产品展示、数字孪生、三维GIS等多个领域的可视化开发, 也可以结合`唯杰地图VJMAP`做为一个`3D`图层，能够在保留二维图形信息的直观性同时，融入三维空间的深度感知和交互性，为用户带来更丰富、立体和沉浸式的视觉体验及数据分析能力。
@@ -69,4 +69,76 @@ npm install -g live-server
 - 交互设计：提供丰富的交互组件和事件处理机制，增强用户体验和应用互动性。支持场景中的对象拾取与交互，简化了交互逻辑的实现。
 - 扩展性强：基于模块化开发，支持自定义扩展，满足多样化开发需求。
 
-    
+---
+
+<a name="english"></a>
+
+[中文](#) | English
+
+# Introduction
+
+This repository contains all source code for [VJMAP](https://vjmap.com/en/) [VJMAP3D](https://vjmap.com/map3d/en/) examples.
+
+[Online Demo:](https://vjmap.com/map3d/demo/#/gallery/map?lang=en) https://vjmap.com/map3d/demo/#/gallery/map?lang=en
+
+![](https://vjmap.com/blogimages/202406301703728.png)
+
+# Getting Started
+
+The entry file is `index.html`, and the example files are located in the `src` directory. Each example is an independent, self-contained demo that can run on its own.
+
+Since the `File protocol` does not support cross-origin requests, directly opening `index.html` by double-clicking may cause some resources to fail to load. You need to run it via an `HTTP server` using one of the following methods:
+
+- Method 1 (requires `Node.js`):
+```
+npm install -g live-server
+```
+Then navigate to the project directory in your terminal and run `live-server`.
+
+- Method 2 (VS Code):
+
+Install the `Live Server` extension in VS Code. Once installed, open this directory, right-click on an HTML file, and select `Open With Live Server`.
+
+# About VJMAP
+
+`VJMAP` is a one-stop solution for `CAD` drawings and custom map format `WebGIS` visualization. It supports common formats such as `AutoCAD` `DWG` files, `GeoJSON`, and other popular `GIS` file formats. It renders interactive maps using WebGL `vector tiles` and `custom styles`, and provides innovative `big data visualization` and `real-time streaming data` visualization capabilities. With VJMAP, you can quickly build beautiful, smooth map presentations and spatial analysis on both browsers and mobile devices, helping you create feature-rich, interactive, and customizable map applications.
+
+Official Website: [VJMAP](https://vjmap.com/en/) https://vjmap.com/en/
+
+# Key Features
+
+- Fully compatible with `AutoCAD` `DWG` files — no conversion needed
+
+- Comprehensive map controls: zoom in/out, free zoom, pan, fit to view. Supports mouse/touch drag, keyboard navigation, scroll wheel zoom, double-click zoom, pinch-to-zoom, and Shift+drag to zoom. Includes fly-to and pan animations, `map comparison` feature, and export to PNG, PDF, SVG formats.
+
+- Multiple view modes: supports `2D` and `3D` perspectives, vertical and 360-degree rotation views.
+
+- Seamless `CAD` and `GIS` integration: supports rendering CAD drawings as `raster tiles` and `vector tiles` with `custom map styles`; supports `WMS` format; supports overlaying with `web maps`.
+
+- Interactive map operations: click on elements to view properties, toggle layer visibility, and perform `spatial queries` on GIS data.
+
+- `Version control` for drawings; `collaborative` drawing updates allow creating composite drawings from different departments' uploads, with automatic updates when dependent drawings change.
+
+- Web-based `drawing` capabilities: draw points, lines, polygons, circles, etc., and save drawings as DWG files. Supports coordinate `snapping` on CAD drawings and provides `measurement` tools for distance, angle, and area.
+
+- Supports `overlay` rendering, `clustering`, `info windows`, `heatmap` overlays, and other common map features with rich JavaScript APIs.
+
+- Advanced rendering with `WebGL` technology; no lag when overlaying tens of thousands of data points on CAD drawings, supporting `big data visualization`.
+
+- `Cross-platform` deployment (supports `Windows` and `Linux`); supports `Docker` deployment, and fully compatible with `mobile` viewing.
+
+# VJMAP3D
+
+[VJMAP3D](https://vjmap.com/map3d/en/) is a 3D visualization engine framework built on [Three.js](https://threejs.org/). With VJMAP3D's rich feature set, you can create stunning 3D visualization applications in the browser.
+
+The framework can serve as a standalone 3D engine for data visualization, product showcases, digital twins, 3D GIS, and more. It can also be combined with `VJMAP` as a `3D` layer, preserving the intuitiveness of 2D graphic information while adding 3D spatial depth perception and interactivity, delivering a richer, more immersive visual experience and data analysis capability.
+
+## VJMAP3D Features
+
+- Fully compatible with `AutoCAD` `DWG` file display — no conversion needed
+- Compatible with `VJMAP`: one framework, one codebase — works both as a `VJMAP` `3D` layer and as a standalone 3D engine
+- Built on `Three.js`, compatible with `Three.js` syntax. Leverage the vast Three.js developer community and ecosystem resources
+- Easy to use: low learning curve with rich API interfaces for quick 3D application development
+- Rich built-in features: preset objects, materials, particle systems, post-processing effects, and more for quickly achieving complex visual effects
+- Interactive design: comprehensive interaction components and event handling mechanisms to enhance user experience. Supports object picking and interaction within scenes, simplifying interaction logic
+- Highly extensible: modular architecture supporting custom extensions to meet diverse development needs
