@@ -19147,12 +19147,14 @@ export  function buildPathTubeTopo(input: {
               * @param startPoint 起点
               * @param endPoint 终点
               * @param lines 坐标，请转成几何坐标，再传入
+              * @param precision 误差，小数点后几位， 以为相同, 如果两个点的坐标距离小于此值，则认为是同一个节点
+              * @param hasDirection 是否考虑方向
               */
              export  function findShortestPath(startPoint: [number, number, number], endPoint: [number, number, number], lines: Array<{
                  points: [number, number, number][];
                  id?: string;
                  weight?: number;
-             }>): {
+             }>, precision?: number, hasDirection?: boolean): {
                  startPoint: {
                      closestLength: number;
                      closestPoint: GeoPoint;
@@ -21836,6 +21838,8 @@ export  function buildPathTubeTopo(input: {
                  useTransformControl?: boolean;
                  /** 顶点平移时使用TransformControl控件，默认(false,需要按shift点击才显示) */
                  useVertTransformControl?: boolean;
+                 /** 同unproject的第三个参数 (undefined根据地图配置决定， false 不用场景数据, true用场景数据)   深度 (-1近裁剪面 到 1 远裁剪面) 或者输入 平面  或者由一个点所在的屏幕平面 或者使用当前场景实体 或 指定实体数组  或同时指定包含或过滤的实体 depth 使用深度*/
+                 unprojectOpts?: UnProjectOpts | "depth";
                  /** 双击退出编辑，默认是 */
                  dblClickExitEdit?: boolean;
                  /** 要编辑的绘图图层名称 默认为 draw */
@@ -22261,6 +22265,44 @@ export  function buildPathTubeTopo(input: {
                  expr: string;
                  /** 记录开始位置. */
                  beginpos?: number;
+             }
+
+             /**
+              * 自动提取图中表格参数
+              */
+             export  interface IExtractTable {
+                 /** 地图ID. */
+                 mapid?: string;
+                 /** 地图版本(为空时采用当前打开的地图版本). */
+                 version?: string;
+                 /** 图层样式名.为空时，将由选择的实体的图层来决定 */
+                 layer?: string;
+                 /** 范围 [x1,y1,x2,y1] 为空表示此个图，否则为指定区域查询提取. */
+                 bounds?: string;
+                 /** 查询条件(默认为所有线). */
+                 condition?: string;
+                 /** 是否输出调试数据. */
+                 debug?: boolean;
+                 /** 小数点计算精度. 正数表示精度为小数点后几位，负数表示精度为小数点前几位 默认为4 */
+                 digit?: number;
+                 /** 误差值. 正数表示距离小于这个误差值就以为是直线（为零的话表示自动求误差值)，负数表示自动获取的误差值比例倍数大小 默认为0自动*/
+                 tol?: number;
+                 /** 表格边框最少点. 如果表格边框点数小于这个数将排查此表格. 默认 12*/
+                 tableEdgeMinPoint?: number;
+                 /** 表格文本最少数. 如果表格中所有文本个数小于这个数将排查此表格. 默认 4*/
+                 tableTextMinCount?: number;
+                 /** 单元格最大面积比.单元格面积占整体表格面积的比例不能超过这值，超过了此值，将不获取内容 . 默认 90*/
+                 cellMaxArea?: number;
+                 /** 空值所占最小比例. 空值占所有表格的比例超过此值将排查此表格. 默认 90*/
+                 cellEmptyRatio?: number;
+                 /** 单元格最大个数 允许的单元格最大个数,超过这值将排查此表格 . 默认 100000 */
+                 tableMaxCellCount?: number;
+                 /** 线段中允许折线段数 默认情况下只提取水平线或垂直线，如果要允许折线，设置允许线段中折线的段数(非水平和垂直线段) . 默认 0 */
+                 noHvLineSegCount?: number;
+                 /** 表格数据允许重复. 表格数据允许重复会尽可能搜索多的表格，但同一份数据可能在不同的表格中 默认false */
+                 seachTableMost?: boolean;
+                 /** 查找子图范围 默认false */
+                 findChildMapRects?: boolean;
              }
 
               type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N;
@@ -24117,6 +24159,26 @@ export  function buildPathTubeTopo(input: {
                  y: number;
                  r: number;
                  n: number;
+             }
+
+             /**
+              * 拆分子图参数
+              */
+             export  interface ISplitChildMaps {
+                 /** 地图ID. */
+                 mapid?: string;
+                 /** 文件ID. (有mapid，优先使用mapid,没有mapid，使用fileid) */
+                 fileid?: string;
+                 /** 地图版本(为空时采用当前打开的地图版本). */
+                 version?: string;
+                 /** 每个子图拆分后是否全图. 默认false */
+                 isFullExtent?: boolean;
+                 /** 子图范围数组. ["x1,y1,x2,y2",  "x1,y1,x2,y2", ...] */
+                 clipBounds: string[];
+                 /** 方法 cloneObjects 通过深度克隆实体,效率最快(默认),  cloneDb 通过克隆文档数据库，效率较快；cloneMap 通过克隆图，效率较慢，但最能保持原样*/
+                 method?: "cloneObjects" | "cloneDb" | "cloneMap";
+                 /** 是否启动新进程处理（不影响主进程，看初始速度慢些） 默认true */
+                 startNewProcess?: boolean;
              }
 
              /**
@@ -27648,11 +27710,15 @@ export  function buildPathTubeTopo(input: {
              };
 
              /**
-              * 多条线之间根据交点相互分开,返回相交后的所有线段，请确保每条线段不要自相交
-              * @param lines
+              * 多条线之间根据交点相互分开,返回相交后的所有线段
+              * @param lines 输入的线段集合
               * @param dotErr 允许误差的小数点后几位，默认6位
+              * @param isGetLineIndex 获取结果中是否返回原来线的索引, 默认false
               */
-             export  function multiLineSplit(lines: GeoPoint[][], dotErr?: number): GeoPoint[][];
+             export  function multiLineSplit(lines: GeoPoint[][], dotErr?: number, isGetLineIndex?: boolean): GeoPoint[][] | {
+                 newLines: GeoPoint[][];
+                 newLineIndexs: number[];
+             };
 
              /**
               * MultiLineString Geometry Object
@@ -29748,7 +29814,7 @@ export  function buildPathTubeTopo(input: {
                  euler?: Euler;
                  /** 是否相机跟随 */
                  cameraFollow?: boolean;
-                 /** 相机跟随时距离模型距离 默认模型高度的5倍 */
+                 /** 相机跟随时距离模型距离, 输入值为正数是表示距离，负数表示是模型高度的倍数。 默认模型高度的5倍 */
                  followDist?: number;
                  /** 相机跟随时距离模型角度 默认 35*/
                  followAngle?: number;
@@ -30100,6 +30166,7 @@ export  function buildPathTubeTopo(input: {
                  geometries: PathTubeGeometry[];
                  constructor(options: PathTubeEntitiesOptions);
                  coordHash(pt: [number, number, number]): string;
+                 getAngleWithXYPlane(start: Vector3, end: Vector3): number;
                  /** 更新 */
                  update(): void;
                  addTo(target?: App | Entity): void;
@@ -30162,6 +30229,22 @@ export  function buildPathTubeTopo(input: {
                      paths: [number, number, number][];
                      /** 禁止该路径合并节点 默认false */
                      disableMergeNode?: boolean;
+                     /** 开始点禁止该路径合并节点 默认false */
+                     startDisableMergeNode?: boolean;
+                     /** 结束点禁止该路径合并节点 默认false */
+                     endDisableMergeNode?: boolean;
+                     /** 开始点当管道倾斜角度大于多少度时，自动在节点旁边增加一个点, 默认45度*/
+                     startNodeAutoAddNodeMaxPitch?: number;
+                     /** 结束点当管道倾斜角度大于多少度时，自动在节点旁边增加一个点, 默认45度*/
+                     endNodeAutoAddNodeMaxPitch?: number;
+                     /** 开始点当管道倾斜角度大于多少度时，自动在节点旁边增加一个点的距离为半径大小的比例大小，默认为2.0（距离为节点半径nodeRadius大小)*/
+                     startAutoAddNodeRadiusRatio?: number;
+                     /** 结束点当管道倾斜角度大于多少度时，自动在节点旁边增加一个点的距离为半径大小的比例大小，默认为2.0（距离为节点半径nodeRadius大小)*/
+                     endAutoAddNodeRadiusRatio?: number;
+                     /** 开始点当管道倾斜角度大于多少度时，自动在节点旁边增加一个点后，是否保持原来的倾斜角度, 默认false*/
+                     startAutoAddNodeKeepPitch?: boolean;
+                     /** 结束点当管道倾斜角度大于多少度时，自动在节点旁边增加一个点后，是否保持原来的倾斜角度, 默认false*/
+                     endAutoAddNodeKeepPitch?: boolean;
                      /** 其他属性数据 */
                      [key: string]: any;
                  }[];
@@ -30199,6 +30282,12 @@ export  function buildPathTubeTopo(input: {
                  };
                  /** 禁止该路径合并节点 全局设置 默认false */
                  disableMergeNode?: boolean;
+                 /** 当管道倾斜角度大于多少度时，自动在节点旁边增加一个点, 默认45度， 为零时将禁止*/
+                 autoAddNodeMaxPitch?: number;
+                 /** 当管道倾斜角度大于多少度时，自动在节点旁边增加一个点的距离为半径大小的比例大小，默认为2.0（距离为节点半径nodeRadius大小)*/
+                 autoAddNodeRadiusRatio?: number;
+                 /** 当管道倾斜角度大于多少度时，自动在节点旁边增加一个点后，是否保持原来的倾斜角度, 默认false*/
+                 autoAddNodeKeepPitch?: boolean;
                  /** 建立拓扑关系策略（默认nodeIntersect） nodeIntersect 一条管道的始末节点与另一条相交时，自动把另一条拆成多段建立拓扑。nodeEqual 一条管道的始末节点与另一条管道的始末节点相等时建立拓扑，不会自动拆分 */
                  topoStrategy?: "nodeIntersect" | "nodeEqual";
              }
@@ -32791,11 +32880,11 @@ export  function buildPathTubeTopo(input: {
              }
 
               const enum ReactiveFlags {
-                 SKIP = "__v_skip",
-                 IS_REACTIVE = "__v_isReactive",
-                 IS_READONLY = "__v_isReadonly",
-                 IS_SHALLOW = "__v_isShallow",
-                 RAW = "__v_raw"
+                 SKIP = "__vj_skip",
+                 IS_REACTIVE = "__vj_isReactive",
+                 IS_READONLY = "__vj_isReadonly",
+                 IS_SHALLOW = "__vj_isShallow",
+                 RAW = "__vj_raw"
              }
 
               namespace reactivity {
@@ -34973,6 +35062,10 @@ export  function buildPathTubeTopo(input: {
                       */
                      cmdClearTileCache(mapid: string, version: string): Promise<any>;
                      /**
+                      * 获取服务端用户配置数据
+                      */
+                     getUserConfig(): Promise<Record<string, any>>;
+                     /**
                       * 删除地图样式
                       * @return {Promise<any>}
                       * @param param 样式接口
@@ -35242,6 +35335,18 @@ export  function buildPathTubeTopo(input: {
                       * @return {Promise<any>}
                       */
                      cmdMatchObject(param: IMatchObject): Promise<any>;
+                     /**
+                      * 自动提交图中的表格
+                      * @param param 参数
+                      * @return {Promise<any>}
+                      */
+                     cmdExtractTable(param: IExtractTable): Promise<any>;
+                     /**
+                      * 拆分子图
+                      * @param param 参数
+                      * @return {Promise<any>}
+                      */
+                     cmdSplitChildMaps(param: ISplitChildMaps): Promise<any>;
                      /**
                       * 获取创建实体的几何数据
                       * @param param 参数
@@ -41617,6 +41722,8 @@ export  function buildPathTubeTopo(input: {
                          IDeleteCache,
                          IExportLayout,
                          IMatchObject,
+                         IExtractTable,
+                         ISplitChildMaps,
                          IComposeNewMap,
                          IMapDiff,
                          ICreateEntitiesGeomData,
@@ -42625,6 +42732,8 @@ export  function buildPathTubeTopo(input: {
                          IDeleteCache,
                          IExportLayout,
                          IMatchObject,
+                         IExtractTable,
+                         ISplitChildMaps,
                          IComposeNewMap,
                          IMapDiff,
                          ICreateEntitiesGeomData,
@@ -52951,8 +53060,10 @@ export  class DbBlockReference extends DbEntity {
     rotation?: number;
     /** 缩放因子. [x方向，y方向,z方向]*/
     scaleFactors?: [number, number, number?];
-    /** 属性字段值*/
+    /** 块属性字段值*/
     attribute?: Record<string, string | number | DbText>;
+    /** 自定义属性字段值*/
+    property?: Record<string, string | number>;
     /**
      * 构造函数
      */
@@ -53052,8 +53163,19 @@ export  class DbDocument {
     pickLayers?: string[];
     /** 来源于哪个图时有效，表示从此图中选择指定的实体ID，不在指定的实体ID将不会显示 */
     pickEntitys?: string[];
-    /** 来源于哪个图时有效，使用表达式，表示从此图中选择指定的实体ID，不在指定的实体ID将不会显示 结果与pickEntitys的取并 */
+    /** 来源于哪个图时有效，使用表达式(支持js语法，或表达式语法)，表示从此图中选择指定的实体ID，不在指定的实体ID将不会显示 结果与pickEntitys的取并 */
+    /**
+     * Example:
+     * 利用表达式把sys_zp图中所有的块实体重新生成一个新图
+     * ```typescript
+     * let doc = new vjmap.DbDocument();
+     * doc.from = "sys_zp/v1";
+     * // doc.pickExpr = "gOutReturn := if((gInFeatureType == 'AcDbBlockReference'), 1, 0);"
+     *  doc.pickExpr = "return gInFeatureType == 'AcDbBlockReference'" // js语法
+     * ```
+     */
     pickExpr?: string;
+    /** 是否把来源图里面的数据都清空 */
     isClearFromDb?: boolean;
     /** 文档环境，用于设置是否显示线宽等设置, 设置线宽为 LWDISPLAY ,true显示或 false不显示线宽*/
     environment?: Record<string, any>;
@@ -53283,6 +53405,8 @@ export  class DbMLeader extends DbEntity {
     textAttachment?: MTextAttachmentPoint;
     /** 文本样式. */
     textStyle?: string;
+    /** 文本边框. */
+    enableFrameText?: boolean;
     /** 文本对齐方向. 0 水平 1 垂直*/
     textAttachmentDirection?: 0 | 1;
     /** 文本对齐类型. type(0-10) value(0-4) [type1, value1, type2, value2....]*/
@@ -53517,14 +53641,20 @@ export  class DbSpline extends DbCurve {
 export  class DbTable extends DbBlockReference {
     /** 表样式名称. */
     tableStyleName?: string;
+    /** 文本样式. */
+    textStyle?: string;
     /** 表格列数. */
     numColumns?: number;
     /** 表格行数. */
     numRows?: number;
     /** 列宽. */
     columnWidth?: number;
+    /** 各行高. */
+    rowHeight?: number[];
+    /** 各列宽. */
+    columnWidths?: number[];
     /** 行高. */
-    rowHeight?: number;
+    rowHeights?: number;
     /** 是否禁用标题. */
     disableTitle?: boolean;
     /** 表格方向是否从上至上. */
@@ -53551,6 +53681,8 @@ export  class DbTable extends DbBlockReference {
     data?: Array<Array<string | {
         /** 单元格文本内容. */
         text: string;
+        /** 单元格文本样式. */
+        textStyle?: string;
         /** 单元格对齐方式. */
         alignment: TableCellAlignment;
         /** 单元格背景色. */
@@ -54807,22 +54939,22 @@ export  class GeoPoint {
      */
     distSqr(p: GeoPoint): number;
     /**
-     * 角度.
+     * 角度(弧度).
      *
      */
     angle(): number;
     /**
-     * 距一个点的角度
+     * 距一个点的角度(弧度)
      *
      */
     angleTo(b: GeoPoint): number;
     /**
-     * 距一个点的interiorAngle
+     * 距一个点的interiorAngle(弧度)
      *
      */
     angleWith(b: GeoPoint): number;
     /**
-     * 距一个点的interiorAngle
+     * 距一个点的interiorAngle(弧度)
      *
      */
     angleWithSep(x: number, y: number): number;
@@ -55064,6 +55196,13 @@ export  function getOptionValue<T>(a: T | undefined, b: T | undefined, c: T | un
 export  function getOptionValue<T>(...values: Array<T | undefined>): T | undefined;
 
 /**
+ * 根据epsg代号获取proj字符串
+ * @param epsg epsg代码如2346
+ * @returns
+ */
+ function getProjByEpsgCode(epsg: number): string | undefined;
+
+/**
  * 获取一个临时的图id(临时图形只会用临时查看，过期会自动删除)
  * @param expireTime 临时图形不浏览情况下过期自动删除时间，单位分钟。默认30
  * @param isVisible 是否可见，（可见的话，将可通过ListMaps获取，否则为隐藏图）。默认不可见
@@ -55243,9 +55382,10 @@ export  type HillshadeLayerStyleProp = {
 /**
  * html颜色转实体颜色
  * @param color html
+ * @param isEntClr 是否为后台显示的实体颜色
  * @return {number}
  */
-export  function htmlColorToEntColor(color: string): number;
+export  function htmlColorToEntColor(color: string, isEntClr?: boolean): number;
 
 export  const httpHelper: {
     configure: (opts: Partial<Config>) => void;
@@ -55866,7 +56006,7 @@ export  interface IDbMatrixOp {
     vector?: [number, number, number?];
     /** 缩放大小 . */
     scale?: number;
-    /** 旋转的角度 . */
+    /** 旋转的角度(弧度) . */
     angle?: number;
     /** 基点. */
     origin?: [number, number, number?];
@@ -56310,10 +56450,48 @@ export  interface IExportLayout {
  * 表达式查询实体参数
  */
 export  interface IExprQueryFeatures extends IQueryBaseFeatures {
-    /** 表达式. */
+    /** 表达式.（支持js语法，或表达式语法） */
     expr: string;
     /** 记录开始位置. */
     beginpos?: number;
+}
+
+/**
+ * 自动提取图中表格参数
+ */
+export  interface IExtractTable {
+    /** 地图ID. */
+    mapid?: string;
+    /** 地图版本(为空时采用当前打开的地图版本). */
+    version?: string;
+    /** 图层样式名.为空时，将由选择的实体的图层来决定 */
+    layer?: string;
+    /** 范围 [x1,y1,x2,y1] 为空表示整个图，否则为指定区域查询提取. */
+    bounds?: string;
+    /** 查询条件(默认为所有线). */
+    condition?: string;
+    /** 是否输出调试数据. */
+    debug?: boolean;
+    /** 小数点计算精度. 正数表示精度为小数点后几位，负数表示精度为小数点前几位 默认为4 */
+    digit?: number;
+    /** 误差值. 正数表示距离小于这个误差值就以为是直线（为零的话表示自动求误差值)，负数表示自动获取的误差值比例倍数大小 默认为0自动*/
+    tol?: number;
+    /** 表格边框最少点. 如果表格边框点数小于这个数将排除此表格. 默认 12*/
+    tableEdgeMinPoint?: number;
+    /** 表格文本最少数. 如果表格中所有文本个数小于这个数将排除此表格. 默认 4*/
+    tableTextMinCount?: number;
+    /** 单元格最大面积比.单元格面积占整体表格面积的比例不能超过这值，超过了此值，将不获取内容 . 默认 90*/
+    cellMaxArea?: number;
+    /** 空值所占最小比例. 空值占所有表格的比例超过此值将排除此表格. 默认 90*/
+    cellEmptyRatio?: number;
+    /** 单元格最大个数 允许的单元格最大个数,超过这值将排除此表格 . 默认 100000 */
+    tableMaxCellCount?: number;
+    /** 线段中允许折线段数 默认情况下只提取水平线或垂直线，如果要允许折线，设置允许线段中折线的段数(非水平和垂直线段) . 默认 0 */
+    noHvLineSegCount?: number;
+    /** 表格数据允许重复. 表格数据允许重复会尽可能搜索多的表格，但同一份数据可能在不同的表格中 默认false */
+    seachTableMost?: boolean;
+    /** 查找子图范围 默认false */
+    findChildMapRects?: boolean;
 }
 
 export  type ImageSourceSpecification = {
@@ -56812,6 +56990,26 @@ export  interface ISliceLayer {
     busyBatchSleepMs?: number;
 }
 
+/**
+ * 拆分子图参数
+ */
+export  interface ISplitChildMaps {
+    /** 地图ID. */
+    mapid?: string;
+    /** 文件ID. (有mapid，优先使用mapid,没有mapid，使用fileid) */
+    fileid?: string;
+    /** 地图版本(为空时采用当前打开的地图版本). */
+    version?: string;
+    /** 每个子图拆分后是否全图. 默认false */
+    isFullExtent?: boolean;
+    /** 子图范围数组. ["x1,y1,x2,y2",  "x1,y1,x2,y2", ...] */
+    clipBounds: string[];
+    /** 方法 cloneObjects 通过深度克隆实体,效率最快(默认),  cloneDb 通过克隆文档数据库，效率较快；cloneMap 通过克隆图，效率较慢，但最能保持原样*/
+    method?: "cloneObjects" | "cloneDb" | "cloneMap";
+    /** 是否启动新进程处理（不影响主进程，看初始速度慢些） 默认true */
+    startNewProcess?: boolean;
+}
+
 export  const isPoint: (point: Object) => point is Point23D;
 
 export  const isPoint3D: (point: Point23D) => point is Point3D;
@@ -56873,7 +57071,7 @@ export  interface IUpdateStyle {
     backcolor?: number;
     /** 线宽，格式如[1，1，1，1，0].表式第1，2，3，4级线宽开，第5级线宽关，大于第5级的，以最后设置的级别状态为主，所以也是关。如为空，则和原图线宽显示状态相同 */
     lineweight?: string | number[];
-    /** 表达式. */
+    /** 表达式.（支持js语法，或表达式语法） */
     expression?: string;
 }
 
@@ -56929,6 +57127,8 @@ export  interface IWorkspace {
     workDir?: string;
     /** 是否公开（不公开的话，无法通过获取工作区功能来获取到此工作区信息）. */
     isPublic?: boolean;
+    /** 是否禁用全文搜索. 默认false */
+    DisableFullSearch?: boolean;
 }
 
 export  const kebabCase: (s: any) => any;
@@ -58770,6 +58970,7 @@ export  class MousePositionControl {
     private readonly labelFormat;
     private coord;
     private readonly showLatLng;
+    private readonly showUcs;
     private readonly showZoom;
     private readonly showBearing;
     private readonly showPitch;
@@ -58797,6 +58998,7 @@ export  interface MousePositionControlOption {
         backgroundColor: string;
     };
     showLatLng?: boolean;
+    showUcs?: boolean;
     showZoom?: boolean;
     showBearing?: boolean;
     showPitch?: boolean;
@@ -58830,11 +59032,15 @@ export  enum MTextAttachmentPoint {
 }
 
 /**
- * 多条线之间根据交点相互分开,返回相交后的所有线段，请确保每条线段不要自相交
- * @param lines
+ * 多条线之间根据交点相互分开,返回相交后的所有线段
+ * @param lines 输入的线段集合
  * @param dotErr 允许误差的小数点后几位，默认6位
+ * @param isGetLineIndex 获取结果中是否返回原来线的索引, 默认false
  */
-export  function multiLineSplit(lines: GeoPoint[][], dotErr?: number): GeoPoint[][];
+export  function multiLineSplit(lines: GeoPoint[][], dotErr?: number, isGetLineIndex?: boolean): GeoPoint[][] | {
+    newLines: GeoPoint[][];
+    newLineIndexs: number[];
+};
 
 /**
  * MultiLineString Geometry Object
@@ -60217,6 +60423,26 @@ export  class Service {
     private _post;
     private _del;
     /**
+     * http get请求
+     * @param url url地址
+     * @param params 请求参数
+     * @param args 请求设置参数
+    */
+    httpGet(url: string, params?: Record<string, any>, args?: Partial<Config>): Promise<any>;
+    /**
+     * http post请求
+     * @param url url地址
+     * @param data 请求数据
+     * @param args 请求设置参数
+     */
+    httpPost(url: string, data: any, args?: Partial<Config>): Promise<any>;
+    /**
+     * http delete请求
+     * @param url url地址
+     * @param args 请求设置参数
+     */
+    httpDel(url: string, args?: Partial<Config>): Promise<any>;
+    /**
      * 把图层名称数组转成图层索引数组
      * @param layernames 图层名称数组
      * @param layers 图层列表
@@ -60518,6 +60744,10 @@ export  class Service {
      */
     cmdClearTileCache(mapid: string, version: string): Promise<any>;
     /**
+     * 获取服务端用户配置数据
+     */
+    getUserConfig(): Promise<Record<string, any>>;
+    /**
      * 删除地图样式
      * @return {Promise<any>}
      * @param param 样式接口
@@ -60647,6 +60877,18 @@ export  class Service {
      * @return {Promise<any>}
      */
     cmdMatchObject(param: IMatchObject): Promise<any>;
+    /**
+     * 自动提取图中的表格
+     * @param param 参数
+     * @return {Promise<any>}
+     */
+    cmdExtractTable(param: IExtractTable): Promise<any>;
+    /**
+     * 拆分子图
+     * @param param 参数
+     * @return {Promise<any>}
+     */
+    cmdSplitChildMaps(param: ISplitChildMaps): Promise<any>;
     /**
      * 获取创建实体的几何数据
      * @param param 参数
@@ -61752,6 +61994,7 @@ export  const transform: {
     EpsgCrsTypes: typeof EpsgCrsTypes;
     getEpsgParam: typeof getEpsgParam;
     getEpsgCode: typeof getEpsgCode;
+    getProjByEpsgCode: typeof getProjByEpsgCode;
 };
 
 export  type TransitionSpecification = {
@@ -63206,6 +63449,48 @@ export  const wrap: (min: number, max: number, v: number) => number;
 
 
         /**
+         * 是否有UCS坐标 (地图打开后返回的ucsorg参数)
+         * @return boolean
+         */
+        hasUcs(): boolean;
+
+        /**
+         * 地图地理世界坐标转UCS坐标 (如果wcs和ucs一样的话，无需转换)
+         * @param input 地理坐标世界坐标
+         * @param uscorg ucs转换参数(地图打开后返回的ucsorg参数），可为空，为空默认为当前地图的ucsorg
+         * @return {[number, number]}
+         */
+        wcsToUcs<
+            T extends
+                    | GeoJsonGeomertry
+                | GeoPoint
+                | GeoPointLike
+                | GeoPointLike[]
+                | any
+        >(
+            input: T,
+            ucsorg?: string
+        ): any;
+
+        /**
+         * UCS坐标转地图地理世界坐标 (如果wcs和ucs一样的话，无需转换)
+         * @param input UCS坐标点
+         * @param uscorg ucs转换参数(地图打开后返回的ucsorg参数），可为空，为空默认为当前地图的ucsorg
+         * @return {GeoPoint}
+         */
+        ucsToWcs<
+            T extends
+                    | GeoJsonGeomertry
+                | GeoPoint
+                | GeoPointLike
+                | GeoPointLike[]
+                | any
+        >(
+            input: T,
+            ucsorg?: string
+        ): any;
+
+        /**
          *
          * @param tileUrl  切换至矢量瓦片地址
          * @param rasterPrefix 栅格图层前缀，缺省raster
@@ -63349,6 +63634,11 @@ export  const wrap: (min: number, max: number, v: number) => number;
         getCanvasSize(): [number, number];
 
         /**
+         * 得到地图的所有控件
+         */
+        getControls(): IControl[];
+
+        /**
          * 得到地图的所有marker
          */
         getMarkers(): Marker[];
@@ -63372,6 +63662,39 @@ export  const wrap: (min: number, max: number, v: number) => number;
          * 清除所有popups，会触发`removePopups`事件
          */
         removePopups(): any;
+
+        /**
+         * 清空地图数据
+         * @param {object} options 选项
+         * @param {boolean} [options.clearMarkers] 是否清空所有点标注
+         * @param {boolean} [options.clearDraw] 是否清空所有绘制图层
+         * @param {boolean} [options.clearOtherLayerData] 清空地图除底图外所有数据
+         * @param {boolean} [options.clearAllData] 清空地图所有数据
+         * @example
+         * // 示例一
+         * // 清空地图所有点标注数据
+         * map.clearMapData({clearMarkers: true});
+         * // 示例二
+         * // 清空地图所有绘制图层数据
+         * map.clearMapData({clearDraw: true});
+         * // 示例三
+         * // 清空地图除底图外所有数据
+         * map.clearMapData({clearOtherLayerData: true});
+         * // 示例四
+         * // 清空地图所有数据
+         * map.clearMapData({clearAllData: true});
+         */
+        clearMapData(options: {
+            clearMarkers: boolean;
+            clearDraw: boolean;
+            clearOtherLayerData: boolean;
+            clearAllData: boolean;
+        }): void;
+
+        /**
+         * 销毁地图，将清空地图上所有数据，并移除地图
+         */
+        destory(): any;
 
         /**
          * 经纬度坐标转像素坐标，不会返回无效值
@@ -63568,6 +63891,15 @@ export  const wrap: (min: number, max: number, v: number) => number;
          * @return {number}
          */
         createDbGeomData(doc: DbDocument, isAutoUpdateMapExtent?: boolean, isDarkMode?: boolean, options?: ICreateEntitiesGeomData, includeAttrSet?: string[]): Promise<any>
+
+        /**
+         * 信息弹窗提示
+         * - text（必填）：需要输出的文本
+         * - type（可选）：输出类型 默认是 "log"
+         * - time（可选）：停留时间 默认是 2500
+         */
+        logInfo(text: string, type?: "log" | "warn" | "error" | "info" | "success" | number, time?: number): void
+
 
         
 

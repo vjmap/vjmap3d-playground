@@ -1,0 +1,81 @@
+
+    window.onload = async () => {
+    const env = {
+        serviceUrl: "https://vjmap.com/server/api/v1",
+        accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJRCI6MiwiVXNlcm5hbWUiOiJhZG1pbjEiLCJOaWNrTmFtZSI6ImFkbWluMSIsIkF1dGhvcml0eUlkIjoiYWRtaW4iLCJCdWZmZXJUaW1lIjo4NjQwMCwiZXhwIjo0ODEzMjY3NjM3LCJpc3MiOiJ2am1hcCIsIm5iZiI6MTY1OTY2NjYzN30.cDXCH2ElTzU2sQU36SNHWoTYTAc4wEkVIXmBAIzWh6M",
+        exampleMapId: "sys_zp",
+        assetsPath: "../../../assets/",
+        ...__env__ // 如果您已私有化部署，需要连接已部署的服务器地址和token，请打开js/env.js,修改里面的参数
+    };
+    try {
+        // 在线效果查看地址: https://vjmap.com/map3d/demo/#/demo/map/entity/mapview/07mapviewcadweb
+        // -- CAD map overlaid with web map --
+const tdtImgUrl =
+"https://t2.tianditu.gov.cn/DataServer?T=img_w&X={x}&Y={y}&L={z}&tk=7baeffb96bf61861b302d0f963cfda66";
+const tdtAnnoUrl = `https://t3.tianditu.gov.cn/DataServer?T=cva_w&X={x}&Y={y}&L={z}&tk=7baeffb96bf61861b302d0f963cfda66`;
+let svc = new vjmap3d.Service(env.serviceUrl, env.accessToken);
+let app = new vjmap3d.App(svc, {
+    container: "map", // Container id
+    stat: { show: true, left: "0" },
+    scene: {
+        gridHelper: { visible: true } // Whether to show grid helper
+    },
+    camera: {  // Camera settings
+        viewHelper: { enable: true, position: "leftBottom" } // Whether to show view helper
+    },
+    control: { leftButtonPan: true } // Left button for rotate (right for pan), same as 2D map usage
+})
+let mapId = "sys_cadcesium";
+let res = await svc.openMap({
+    mapid: mapId, // Map ID
+    mapopenway: vjmap.MapOpenWay.GeomRender, // Open with geometry render mode
+    style: vjmap.openMapDarkStyle() // Use dark background style when div has dark background
+});
+if (res.error) {
+    // If open fails
+    showError(res.error);
+    return;
+}
+let layer = res.layer; // Layer style name
+let cadEpsg = "EPSG:4544"; // CAD map EPSG code
+// Add CAD WMS layer
+let wmsUrl = svc.wmsTileUrl({
+    mapid: mapId, // Map id
+    layers: layer, // Layer name
+    bbox: "", // bbox not needed here
+    srs: "EPSG:3857", //
+    crs: cadEpsg
+});
+wmsUrl += "&bbox={BBOX}";
+let provider = new vjmap3d.MapProvider(
+    [
+        {
+            url: tdtImgUrl
+        },
+        {
+            url: tdtAnnoUrl
+        },
+        {
+            url: wmsUrl
+        }
+    ],
+    {
+        rootTile: [8, 203, 106]
+    }
+);
+let mapviewEnt = new vjmap3d.MapViewEntity({
+    provider,
+    baseScale: 100,
+});
+mapviewEnt.addTo(app);
+// Move camera to CAD map position
+app.cameraControl.loadState({
+    cameraTarget: new THREE.Vector3(6.585799392027572,-1.9140336121623333e-18, -39.579426677122015),
+    cameraPosition: new THREE.Vector3(6.585799392027572,19.84534552753801, -38.00315388879424),
+})
+
+    }
+    catch (e) {
+        console.error(e);
+    }
+};

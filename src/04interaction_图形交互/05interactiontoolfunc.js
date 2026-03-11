@@ -290,7 +290,17 @@
         gui.toJson().forEach(c => ui.appendChild(c));
         
         
-        
+        const sendKeyUp = (keyCode) => {
+            let mod = app.getModule(vjmap3d.InputModule)
+            mod.manager.dispatch(null, {
+                type: "keyup",
+                originalEvent: {
+                    keyCode: keyCode
+                }
+            })
+        }
+        // 如果拾取过程中要主动取消，如点击按钮，退出拾取，可主动发送一个ESC键进行取消
+        // sendKeyUp(27) // 主动发送ESC键
     }
     catch (e) {
         console.error(e);

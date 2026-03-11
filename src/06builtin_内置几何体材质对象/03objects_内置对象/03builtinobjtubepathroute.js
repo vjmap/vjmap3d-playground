@@ -118,7 +118,7 @@
         pathTube.addTo(app);
         // 显示边框线
         pathTube.showEdgeLine({
-            bottom: false,
+            bottom: true,
             top: true,
             center: false,
             color: "#73FBFD"

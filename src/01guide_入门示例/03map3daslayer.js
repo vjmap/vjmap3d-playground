@@ -78,6 +78,26 @@
                 anchor: "bottom"
             }
         });
+        
+        
+        // 下面加载一个模型
+        // 给定一个模型要放置的cad坐标
+        let pos = [mapBounds.center().x + mapBounds.width() / 20, mapBounds.center().y, cadLen * 2];
+        // 模型大小设置为地图宽度的1/10
+        let size = vjmap3d.toDist(mapBounds.width() / 10)
+        let ent = await vjmap3d.ResManager.loadModel(vjmap3d.ResManager.svrUrl("models/Stork.glb"), {
+            //splitSubEntity: true,
+            //anchor: "front-bottom-right",
+            size: size,
+            position: vjmap3d.toWorld(pos)
+        });
+        ent.addTo(app);
+        
+        // 如果模型有动画，可以用下面代码开启动画
+        let mod = ent.getModule(vjmap3d.AnimatorModule);
+        if (!mod) return;
+        let animator = mod.getAnimator();
+        animator.play(0) // 开启动画
     }
     catch (e) {
         console.error(e);
